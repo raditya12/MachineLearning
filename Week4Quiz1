@@ -1,0 +1,639 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/raditya12/MachineLearning/blob/master/Week4Quiz1\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-0",
+      "metadata": {
+        "id": "quiz-cell-0"
+      },
+      "source": [
+        "# Pengantar\n",
+        "\n",
+        "Pada Kuis 1 ini Anda diminta untuk melakukan proses explorartory data analysis (EDA) dan pra pengolahan data pada dataset \"Census Income\". Dataset ini merupakan data tabular yang memiliki beberapa nilai yang hilang (missing value) dan nama variabel (fitur) yang perlu disesuaikan.\n",
+        "\n",
+        "Untuk membantu Anda, notebook ini akan memberikan kode awal untuk proses download data, load data, dan inspeksi informasi terkait dengan metadata."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-2",
+      "metadata": {
+        "id": "quiz-cell-2"
+      },
+      "source": [
+        "# Load Data and Inspect Metadata"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-3",
+      "metadata": {
+        "id": "quiz-cell-3"
+      },
+      "outputs": [],
+      "source": [
+        "# Jalankan di Google Colab; library dasar dan TensorFlow sudah tersedia.\n",
+        "!pip install -q ucimlrepo opencv-python"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-4",
+      "metadata": {
+        "id": "quiz-cell-4"
+      },
+      "outputs": [],
+      "source": [
+        "# Import Required Libraries\n",
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "from ucimlrepo import fetch_ucirepo"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-5",
+      "metadata": {
+        "id": "quiz-cell-5"
+      },
+      "outputs": [],
+      "source": [
+        "adult_income = fetch_ucirepo(id=2)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-6",
+      "metadata": {
+        "id": "quiz-cell-6"
+      },
+      "outputs": [],
+      "source": [
+        "# Data\n",
+        "X = adult_income.data.features\n",
+        "y = adult_income.data.targets\n",
+        "\n",
+        "# Concate Features and Target\n",
+        "df = pd.concat([X, y], axis=1)\n",
+        "\n",
+        "# Show Top 5\n",
+        "df.head()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-7",
+      "metadata": {
+        "id": "quiz-cell-7"
+      },
+      "outputs": [],
+      "source": [
+        "# Data Size\n",
+        "df.shape"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-8",
+      "metadata": {
+        "id": "quiz-cell-8"
+      },
+      "outputs": [],
+      "source": [
+        "# Inspect metadata\n",
+        "adult_income.metadata"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-9",
+      "metadata": {
+        "id": "quiz-cell-9"
+      },
+      "source": [
+        "# Bagian 1 - Data Loading dan Data Imputation"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-10",
+      "metadata": {
+        "id": "quiz-cell-10"
+      },
+      "source": [
+        "## Soal 1 (5 poin)\n",
+        "1.   Lakukan inspeksi profile data\n",
+        "2.   **Variabel apa** yang memiliki **nilai yang hilang** (missing value) dan **berapa** jumlahnya?\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-11",
+      "metadata": {
+        "id": "quiz-cell-11"
+      },
+      "outputs": [],
+      "source": [
+        "# '?' dan NaN sama-sama merupakan missing value.\n",
+        "df = df.replace('?', np.nan)\n",
+        "df.info()\n",
+        "display(df.describe())\n",
+        "print(\"Jumlah missing value:\")\n",
+        "print(df.isnull().sum())\n",
+        "# workclass: 2799, occupation: 2809, native-country: 857.\n",
+        "# Kolom lain tidak memiliki missing value."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-12",
+      "metadata": {
+        "id": "quiz-cell-12"
+      },
+      "source": [
+        "## Soal 2 (5 poin)\n",
+        "1. Lakukan proses data imputation pada fitur yang memiliki data yang hilang\n",
+        "2. Cek kembali apakah masih terdapat data yang hilang"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-13",
+      "metadata": {
+        "id": "quiz-cell-13"
+      },
+      "outputs": [],
+      "source": [
+        "# Isi kolom kategorikal yang kosong dengan modus masing-masing.\n",
+        "for col in ['workclass', 'occupation', 'native-country']:\n",
+        "    df[col] = df[col].fillna(df[col].mode().iloc[0])\n",
+        "\n",
+        "print(df.isnull().sum())  # Semua kolom bernilai 0."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-14",
+      "metadata": {
+        "id": "quiz-cell-14"
+      },
+      "source": [
+        "## Soal 3 (10 poin)\n",
+        "Inspeksi semua fitur kualitatif. Jika terdapat value yang **tidak sesuai**, **ganti dengan 'Others'** atau yang sesuai atau jika terdapat duplikasi karena **kesalahan penulisan**, lakukan penyesuaian."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-15",
+      "metadata": {
+        "id": "quiz-cell-15"
+      },
+      "outputs": [],
+      "source": [
+        "# Inspeksi semua kolom kualitatif.\n",
+        "cat_cols = df.select_dtypes(include=['object', 'string']).columns\n",
+        "for col in cat_cols:\n",
+        "    df[col] = df[col].str.strip()\n",
+        "    print(col, df[col].unique())\n",
+        "\n",
+        "# Satukan label income yang berbeda karena titik di belakang.\n",
+        "df['income'] = df['income'].replace({'<=50K.': '<=50K', '>50K.': '>50K'})\n",
+        "# Perbaiki ejaan negara; kategori sah lainnya tetap dipertahankan.\n",
+        "df['native-country'] = df['native-country'].replace({\n",
+        "    'Columbia': 'Colombia',\n",
+        "    'Trinadad&Tobago': 'Trinidad-and-Tobago',\n",
+        "    'Holand-Netherlands': 'Netherlands',\n",
+        "    'Hong': 'Hong-Kong'\n",
+        "})\n",
+        "print(\"Income setelah perbaikan:\", df['income'].unique())\n",
+        "print(\"Negara setelah perbaikan:\", df['native-country'].unique())"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-16",
+      "metadata": {
+        "id": "quiz-cell-16"
+      },
+      "source": [
+        "# Bagian 2 - Visual Inspection\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-17",
+      "metadata": {
+        "id": "quiz-cell-17"
+      },
+      "source": [
+        "## Soal 1 - Visualisasi Data (20 poin)\n",
+        "Lakukan inspeksi visual pada,\n",
+        "1. Pada kolom 'age' dengan menggunakan histrogram\n",
+        "2. Pada kolom 'education' education menggunakan barchart\n",
+        "3. Pada kolom 'income' terhadap 'hours_per_week' menggunakan boxplot (kelompokkan berdasarkan kelompok income)\n",
+        "4. Pada kolom 'age' terhadap 'capital-gain' dan 'capital-loss' dengan lineplot (1 lineplot 2 data)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-18",
+      "metadata": {
+        "id": "quiz-cell-18"
+      },
+      "outputs": [],
+      "source": [
+        "plt.figure(figsize=(8, 4))\n",
+        "plt.hist(df['age'], bins=20, edgecolor='white')\n",
+        "plt.title('Distribusi Usia')\n",
+        "plt.xlabel('Usia (tahun)')\n",
+        "plt.ylabel('Jumlah individu')\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-19",
+      "metadata": {
+        "id": "quiz-cell-19"
+      },
+      "outputs": [],
+      "source": [
+        "df['education'].value_counts().plot(kind='bar', figsize=(10, 4))\n",
+        "plt.title('Jumlah Individu Berdasarkan Pendidikan')\n",
+        "plt.xlabel('Pendidikan')\n",
+        "plt.ylabel('Jumlah individu')\n",
+        "plt.xticks(rotation=45, ha='right')\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-20",
+      "metadata": {
+        "id": "quiz-cell-20"
+      },
+      "outputs": [],
+      "source": [
+        "kelompok = ['<=50K', '>50K']\n",
+        "jam_rendah = df[df['income'] == '<=50K']['hours-per-week']\n",
+        "jam_tinggi = df[df['income'] == '>50K']['hours-per-week']\n",
+        "plt.figure(figsize=(7, 4))\n",
+        "plt.boxplot([jam_rendah, jam_tinggi])\n",
+        "plt.xticks([1, 2], kelompok)\n",
+        "plt.title('Jam Kerja Berdasarkan Income')\n",
+        "plt.xlabel('Income tahunan (USD)')\n",
+        "plt.ylabel('Jam kerja per minggu')\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-21",
+      "metadata": {
+        "id": "quiz-cell-21"
+      },
+      "outputs": [],
+      "source": [
+        "# Rata-rata per usia agar individu dengan usia sama terwakili satu nilai.\n",
+        "modal = df.groupby('age')[['capital-gain', 'capital-loss']].mean()\n",
+        "modal.plot(figsize=(10, 4))\n",
+        "plt.title('Rata-rata Capital Gain dan Capital Loss Menurut Usia')\n",
+        "plt.xlabel('Usia (tahun)')\n",
+        "plt.ylabel('Rata-rata nilai (USD)')\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-22",
+      "metadata": {
+        "id": "quiz-cell-22"
+      },
+      "source": [
+        "## Soal 2 - Analisis Visual (15 poin)\n",
+        "1. Fenomena apa yang terjadi pada distribusi data 'age'?\n",
+        "2. Jika terdapat data yang hilang pada variabel 'age', strategi apa yang Anda terapkan? Mengapa?\n",
+        "3. Berapa jumlah outlier pada setiap kategori 'income' berkaitan dengan 'hour-per-week'? Kategori apa yang paling banyak memiliki outlier?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-23",
+      "metadata": {
+        "id": "quiz-cell-23"
+      },
+      "outputs": [],
+      "source": [
+        "# 1. Distribusi age menceng ke kanan: lebih banyak individu dewasa muda,\n",
+        "#    sedangkan individu berusia lanjut lebih sedikit. Mean 38,64 > median 37.\n",
+        "# 2. Jika age kosong, gunakan median karena lebih tahan terhadap nilai\n",
+        "#    ekstrem daripada mean. Pada data ini tidak ada age yang kosong.\n",
+        "# 3. Dengan aturan 1,5 IQR per kategori, outlier <=50K berjumlah 11.706\n",
+        "#    dan >50K berjumlah 781. Kategori <=50K memiliki outlier terbanyak.\n",
+        "#    Outlier menurut IQR tidak otomatis berarti datanya salah.\n",
+        "\n",
+        "# Hitung jumlah outlier untuk memverifikasi jawaban nomor 3.\n",
+        "for income in ['<=50K', '>50K']:\n",
+        "    jam = df[df['income'] == income]['hours-per-week']\n",
+        "    q1 = jam.quantile(0.25)\n",
+        "    q3 = jam.quantile(0.75)\n",
+        "    iqr = q3 - q1\n",
+        "    outlier = jam[(jam < q1 - 1.5 * iqr) | (jam > q3 + 1.5 * iqr)]\n",
+        "    print(income, ':', len(outlier), 'outlier')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-24",
+      "metadata": {
+        "id": "quiz-cell-24"
+      },
+      "source": [
+        "# Bagian 3 - Encoding Variabel Kategorical"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-25",
+      "metadata": {
+        "id": "quiz-cell-25"
+      },
+      "source": [
+        "## Soal 1 (5 poin)\n",
+        "Lakukan encoding pada 'Sex' dan 'Income'. 'Income' merupakan variabel target"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-26",
+      "metadata": {
+        "id": "quiz-cell-26"
+      },
+      "outputs": [],
+      "source": [
+        "# Simpan hasil encoding terpisah agar grafik tetap bisa memakai label asli.\n",
+        "df_encoded = df.copy()\n",
+        "df_encoded['sex'] = df_encoded['sex'].map({'Female': 0, 'Male': 1})\n",
+        "df_encoded['income'] = df_encoded['income'].map({'<=50K': 0, '>50K': 1})\n",
+        "y = df_encoded['income']  # Target: 0 = <=50K, 1 = >50K.\n",
+        "df_encoded[['sex', 'income']].head()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-27",
+      "metadata": {
+        "id": "quiz-cell-27"
+      },
+      "source": [
+        "# Bagian 4 - Analisis Korelasi"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-28",
+      "metadata": {
+        "id": "quiz-cell-28"
+      },
+      "source": [
+        "## Soal 1 (10 poin)\n",
+        "1. Lakukan analisis korelasi pada variabel 'age', 'education-num', 'hours-per-week', 'capital-gain', 'capital-loss', dan 'income' (yang sudah di-encoding)\n",
+        "2. Berdasarkan hasil korelasi, informasi apa yang dapat Anda interpretasikan?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-29",
+      "metadata": {
+        "id": "quiz-cell-29"
+      },
+      "outputs": [],
+      "source": [
+        "kolom = ['age', 'education-num', 'hours-per-week',\n",
+        "         'capital-gain', 'capital-loss', 'income']\n",
+        "corr = df_encoded[kolom].corr()\n",
+        "plt.figure(figsize=(8, 6))\n",
+        "sns.heatmap(corr, annot=True, fmt='.3f', cmap='coolwarm', vmin=-1, vmax=1)\n",
+        "plt.title('Korelasi Fitur dan Income')\n",
+        "plt.xticks(rotation=45, ha='right')\n",
+        "plt.tight_layout()\n",
+        "plt.show()\n",
+        "print(corr['income'].drop('income').sort_values(ascending=False))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-30",
+      "metadata": {
+        "id": "quiz-cell-30"
+      },
+      "outputs": [],
+      "source": [
+        "# education-num berkorelasi positif paling besar dengan income (0,333).\n",
+        "# Artinya, pendidikan lebih tinggi cenderung terkait income >50K.\n",
+        "# Korelasi age (0,230), hours-per-week (0,228), capital-gain (0,223),\n",
+        "# dan capital-loss (0,148) juga positif, tetapi relatif lemah.\n",
+        "# Tidak ada hubungan linear yang kuat antarfitur prediktor terpilih.\n",
+        "# Korelasi menunjukkan keterkaitan, bukan bukti sebab-akibat."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-31",
+      "metadata": {
+        "id": "quiz-cell-31"
+      },
+      "source": [
+        "# Bagian 5 - Pra Pengolahan Data Pada Dataset MNIST\n",
+        "\n",
+        "Pada bagian ini, Anda diminta untuk melakukan proses EDA dan pra pengolahan data sederhana pada dataset MNIST. Dataset MNIST merupakan data citra tulisan tangan untuk digil 0 hingga 9. Sebelum melakukan proses pengolahan, Anda akan dibantu dengan proses loading data dan inspeksi data.\n",
+        "\n",
+        "Hints:\n",
+        "1. Hanya gunakan data **Test**\n",
+        "2. Anda perlu melakukan pengolahan terhadap semua data test (total 10k data). Anda dapat menggunakan function untuk mempermudah pekerjaan."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-32",
+      "metadata": {
+        "id": "quiz-cell-32"
+      },
+      "outputs": [],
+      "source": [
+        "from tensorflow.keras.datasets import mnist\n",
+        "\n",
+        "# Hanya gunakan data test sesuai instruksi soal.\n",
+        "_, (X_test, y_test) = mnist.load_data()\n",
+        "print(\"Test shape:\", X_test.shape)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-33",
+      "metadata": {
+        "id": "quiz-cell-33"
+      },
+      "outputs": [],
+      "source": [
+        "plt.figure(figsize=(5, 5))\n",
+        "for i in range(9):\n",
+        "    plt.subplot(3, 3, i + 1)\n",
+        "    plt.imshow(X_test[i], cmap='gray')\n",
+        "    plt.title(f'Label: {y_test[i]}')\n",
+        "    plt.axis('off')\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-34",
+      "metadata": {
+        "id": "quiz-cell-34"
+      },
+      "source": [
+        "## Soal 1 (10 poin)\n",
+        "1. Lakukan proses **upsampling** citra menjadi ukuran 32x32\n",
+        "2. Tampilakan 5 data hasil proses **upsampling**\n",
+        "\n",
+        "Hint: Anda harus membuat array kosong untuk menampung hasil upsampling. Replace pada array X_test tidak dapat dilakukan karena data disimpan dalam bentuk ndarray yang memiliki ukuran fix (10000, (28,28))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-35",
+      "metadata": {
+        "id": "quiz-cell-35"
+      },
+      "outputs": [],
+      "source": [
+        "import cv2\n",
+        "\n",
+        "# Array baru untuk menampung seluruh 10.000 citra hasil resize.\n",
+        "X_test_resized = np.empty((len(X_test), 32, 32), dtype=np.uint8)\n",
+        "for i in range(len(X_test)):\n",
+        "    X_test_resized[i] = cv2.resize(X_test[i], (32, 32))\n",
+        "\n",
+        "print(X_test_resized.shape)  # (10000, 32, 32)\n",
+        "plt.figure(figsize=(10, 3))\n",
+        "for i in range(5):\n",
+        "    plt.subplot(1, 5, i + 1)\n",
+        "    plt.imshow(X_test_resized[i], cmap='gray')\n",
+        "    plt.title(f'Label: {y_test[i]}')\n",
+        "    plt.axis('off')\n",
+        "plt.tight_layout()\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-36",
+      "metadata": {
+        "id": "quiz-cell-36"
+      },
+      "source": [
+        "## Soal 2 (10 poin)\n",
+        "Lakukan normalisasi nilai citra tiap piksel menjadi rentang 0-1"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-37",
+      "metadata": {
+        "id": "quiz-cell-37"
+      },
+      "outputs": [],
+      "source": [
+        "# Normalisasi seluruh piksel dari 0-255 menjadi 0-1.\n",
+        "X_test_normalized = X_test_resized.astype(np.float32) / 255.0\n",
+        "print('Rentang piksel:', X_test_normalized.min(), '-', X_test_normalized.max())"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "quiz-cell-38",
+      "metadata": {
+        "id": "quiz-cell-38"
+      },
+      "source": [
+        "## Soal 3 (10 poin)\n",
+        "Ubah metriks citra menjadi array 1 dimensi. Lakukan pada semua data test yang sudah di resize dan normalisasi.\n",
+        "\n",
+        "Hint: Anda harus membuat holder array kosong untuk menampung hasilnya."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "quiz-cell-39",
+      "metadata": {
+        "id": "quiz-cell-39"
+      },
+      "outputs": [],
+      "source": [
+        "# Holder sesuai petunjuk soal: satu baris berisi 32 x 32 = 1024 piksel.\n",
+        "X_test_flatten = np.empty((len(X_test_normalized), 1024), dtype=np.float32)\n",
+        "for i in range(len(X_test_normalized)):\n",
+        "    X_test_flatten[i] = X_test_normalized[i].flatten()\n",
+        "\n",
+        "print('Seluruh data:', X_test_flatten.shape)  # (10000, 1024)\n",
+        "print('Satu citra:', X_test_flatten[0].shape)  # (1024,)\n",
+        "# Urutan citra tetap, sehingga labelnya tetap y_test."
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
